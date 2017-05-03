@@ -1,6 +1,7 @@
 # What is CodeIgniter Inspinia
 
-[![Software License][ico-license]](LICENSE.md)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/chriskacerguis/codeigniter-restserver/master/LICENSE)
+
 
 Easy Inspinia Admin Theme integration with Codeigniter 3
 
@@ -29,4 +30,4 @@ issues, as well as missing features.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). Please see [License File](https://raw.githubusercontent.com/chriskacerguis/codeigniter-restserver/master/LICENSE) for more information.
