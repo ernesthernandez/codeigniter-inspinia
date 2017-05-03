@@ -1,0 +1,18 @@
+﻿/* TEAM */
+	Chef: Ernest Hernandez
+	Contact: htc.ernest.hernandez@gmail.com
+	From: Guatemala City, Guatemala, CA
+
+	UI developer: Ernest Hernandez
+	Contact: htc.ernest.hernandez@gmail.com
+	From: Guatemala City, Guatemala, CA
+
+/* THANKS */
+
+
+
+/* SITE */
+	Last update: 2016/03/31
+	Language: English / Spanish
+	Doctype:HTML5
+	IDE: Sublime Text, Notepad++, FileZilla, Photoshop, Netbeans
