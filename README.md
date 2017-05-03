@@ -1,5 +1,7 @@
 # What is CodeIgniter Inspinia
+
 [![Software License][ico-license]](LICENSE.md)
+
 Easy Inspinia Admin Theme integration with Codeigniter 3
 
 # Install
