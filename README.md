@@ -1,6 +1,6 @@
 # What is CodeIgniter Inspinia
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/chriskacerguis/codeigniter-restserver/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/pewpewu/codeigniter-inspinia/master/LICENSE)
 
 
 Easy Inspinia Admin Theme integration with Codeigniter 3
@@ -24,17 +24,18 @@ Please see [Inspinia Repository](https://github.com/Chuibility/inspinia) for mor
 ## Installation As Package
 Just copy the files from this package to the corresponding folder in your application folder.
 
-You can also copy the libraries and models directories into your third_party/template folder.
+You can also copy the library, config, language and view directories into your third_party/template folder.
 
 Then in your controller add the package path and load the library like normal:
+```php
 
   $this->load->add_package_path(APPPATH.'third_party/template/');
   $this->load->library('template’);
 
+```
 
 ## Usage
-In the package you will find example usage code in the controllers and views
-folders.
+In the package you will find example usage code in the controllers and views folders.
 
 ## Security
 
@@ -47,4 +48,4 @@ If you discover any security related issues, please email :author_email instead 
 
 ## License
 
-The MIT License (MIT). Please see [License File](https://raw.githubusercontent.com/chriskacerguis/codeigniter-restserver/master/LICENSE) for more information.
+The MIT License (MIT). Please see [License File](https://raw.githubusercontent.com/pewpewu/codeigniter-inspinia/master/LICENSE) for more information.
