@@ -10,6 +10,9 @@ Easy Inspinia Admin Theme integration with Codeigniter 3
 1. PHP version 7 or newer is required.
 2. CodeIgniter 3.0+
 
+## Documentation
+Documentation is located at [Wiki](https://github.com/pewpewu/codeigniter-inspinia/wiki)
+
 # Install
 
 Drag and drop the files of this repository into your fresh codeigniter installation directories.
@@ -17,6 +20,21 @@ Drag and drop the files of this repository into your fresh codeigniter installat
 Please see the [installation section](https://codeigniter.com/user_guide/installation/index.html) of the CodeIgniter User Guide.
 
 Please see [Inspinia Repository](https://github.com/Chuibility/inspinia) for more information about this template. (This is third party repository)
+
+## Installation As Package
+Just copy the files from this package to the corresponding folder in your application folder.
+
+You can also copy the libraries and models directories into your third_party/template folder.
+
+Then in your controller add the package path and load the library like normal:
+
+  $this->load->add_package_path(APPPATH.'third_party/template/');
+  $this->load->library('template’);
+
+
+## Usage
+In the package you will find example usage code in the controllers and views
+folders.
 
 ## Security
 
