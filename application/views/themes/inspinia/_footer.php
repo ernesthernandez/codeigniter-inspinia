@@ -1,9 +1,9 @@
 <div class="footer">
     <div class="pull-right">
-        {app_name} <strong>{app_version}</strong>
+        <?php echo $app_name; ?> <strong><?php echo $app_version; ?></strong>
     </div>
     <div>
-        <strong>{company_name}</strong>
-        &copy; {app_year}
+        <strong><?php echo $company_name; ?></strong>
+        &copy; <?php echo $app_year; ?>
     </div>
 </div>

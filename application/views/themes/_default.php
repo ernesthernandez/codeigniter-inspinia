@@ -1,5 +1,5 @@
-<div class="wrapper wrapper-content animated fadeInRight">
-    <div class="row">
+<div class="wrapper wrapper-content">
+    <div class="row animated fadeInRight">
         <div class="col-lg-12">
             <div class="text-center m-t-lg">
             	{content}
