@@ -2,7 +2,6 @@
 <?php
 /**
  * @package Codeigniter Inspinia 2.8
- * @author  Ernest Hernandez A.K.A. Pewpewyou
  * @copyright   Copyright (c) 2014 - 2017
  * @license http://opensource.org/licenses/MIT  MIT License
  */
@@ -31,11 +30,8 @@ class Template
     /**
      * @var mixed
      */
-    private $_dir;
-    /**
-     * @var mixed
-     */
     private $_module = null;
+    private $_module_uri = null;
     /**
      * Template Assets
      * @var array
@@ -75,16 +71,13 @@ class Template
     protected $size = array();
 
     /**
-     * Template elements
-     * @var array
-     */
-    private $_actions = array();
-    /**
      * @var array
      */
     private $_url       = array();
-    private $_asset_url = array();
-    private $_uri_count = array();
+    /**
+     * @var mixed
+     */
+    private $_dir;
     /**
      * @var array
      */
@@ -97,9 +90,18 @@ class Template
      * Languague name
      * @var array
      */
-    protected $_lang_config = array();
-    protected $_lang_dir    = array();
-    public $_lang;
+
+    protected $_lang_dir;
+    protected $_lang;
+    protected $_group;
+    protected $_groupname;
+    protected $_user;
+    /**
+     * Config files
+     * @var array
+     */
+    private $_menu   = 'menu';
+
 
     /**
      * __get
@@ -120,22 +122,43 @@ class Template
      * __construct
      * @return void
      */
-    public function __construct()
+    public function __construct($params=[])
     {
+        if (isset($params['menu']))
+            $this->_menu = $params['menu'];
+
         $this->load->library('session');
+
         $this->config->load('site', false, true);
         $this->config->load('template', false, true);
+        $this->config->load($this->_menu, false, true);
+
         $this->_parent   = $this->router->fetch_class();
         $this->_child    = $this->router->fetch_method();
-        if (method_exists($this->router,'fetch_module')) {
-            $this->_module = $this->router->fetch_module();
+        if (method_exists($this->router,'fetch_module'))
+        {
+            $this->_module     = $this->router->fetch_module();
+           if ($this->_module !== NULL)
+           {
+                $this->_module_uri = $this->router->fetch_module() . DIRECTORY_SEPARATOR;
+           }
         }
-        $this->_dir      = $this->router->directory;
-        $this->_lang     = $this->session->userdata('site_lang');
-        $this->_uri_count= $this->uri->total_segments();
 
-        $this->_set_template();
+        $this->_dir = $this->router->directory;
+        $this->_uri = $this->uri->total_segments();
+
+        //Sessions
+        $lang  = $this->session->userdata($this->item('language', 'sessions'));
+        $group = $this->session->userdata($this->item('group', 'sessions'));
+        $user  = $this->session->userdata($this->item('user', 'sessions'));
+
+        $this->_lang        = $lang  ? $lang  : 'english';
+        $this->_groupname   = $group ? $group : 'Guest';
+        $this->_group       = $group ? $group : 'user';
+        $this->_user        = $user  ? $user  : 'John Doe';
+
         $this->_set_language();
+        $this->_set_template();
         self::$_parser= $this->_set_library('parser');
     }
 
@@ -152,19 +175,28 @@ class Template
     public function view($template, $data = array(), $return = false) :string
     {
         $this->output->enable_profiler((bool) $this->item('profiler'));
+
+        $data['template_user']  = $this->_user;
+        $data['template_group'] = $this->_groupname;
+        $data['template_lang']  = $this->_lang;
+        //Labels
+        $data['logout_label']   = $this->item('logout', 'labels');
+        $data['profile_label']  = $this->item('profile', 'labels');
+        $data['search_label']   = $this->item('search', 'labels');
         //Routes
         $data['base_url']      = $this->base_url();
         $data['ci_controller'] = $this->_parent;
         $data['ci_method']     = $this->_child;
-        $data['logout_url']    = $this->base_url($this->item('logout_url'));
-        $data['login_url']     = $this->base_url($this->item('login_url'));
+        $data['ci_module']     = $this->_module;
+        $data['logout_url']    = $this->base_url($this->_module_uri . $this->item('logout_url'));
+        $data['login_url']     = $this->base_url($this->_module_uri . $this->item('login_url'));
         //Template Assets
         $data['css_files']     = $this->_process_css($this->css_files);
         $data['js_files']      = $this->_process_js($this->js_files);
         $data['meta']          = $this->_process_meta($this->meta_tags);
         //Application Info
         //$data['title']         = humanize(self::$_parser->parse_string($this->item('title'), $data, true));
-        $data['title']         = $this->item('title');
+        $data['app_title']     = $this->item('title');
         $data['favicon']       = $this->item('favicon');
         $data['company_name']  = ucfirst($this->item('company_name'));
         $data['app_name']      = ucfirst($this->item('app_name'));
@@ -184,7 +216,7 @@ class Template
         $data['lang_list']     = $this->_process_language_list();
         $data['section_back']  = $this->_process_back_buttom();
         //Layout Structure
-        $data['pageheading']   = $this->_uri_count != 0 ? $this->render(self::$_theme['pageheading'], $data) : '';
+        $data['pageheading']   = $this->_uri !== 0 || $this->_parent !== $this->router->default_controller ? $this->render(self::$_theme['pageheading'], $data) : '';
         $data['topnavbar']     = $this->render(self::$_theme['topnavbar'], $data);
         $data['footer']        = $this->render(self::$_theme['footer'], $data);
         $data['body']          = $this->render(self::$_theme['template'], $data);
@@ -205,25 +237,28 @@ class Template
     public function minor($template, $data = array(), $return = false) :string
     {
         $this->output->enable_profiler((bool) $this->item('profiler'));
+
         //Routes
         $data['base_url']      = $this->base_url();
-        $data['logout_url']    = $this->base_url($this->item('logout_url'));
-        $data['login_url']     = $this->base_url($this->item('login_url'));
-        $data['referer_url']   = $this->base_url($this->_parent . '/' . $this->_child);
+        $data['logout_url']    = $this->base_url($this->_module_uri . $this->item('logout_url'));
+        $data['login_url']     = $this->base_url($this->_module_uri . $this->item('login_url'));
+        $data['referer_url']   = $this->base_url($this->_module_uri . $this->_parent . DIRECTORY_SEPARATOR . $this->_child);
         //Template Assets
         $data['css_files']     = $this->_process_css($this->css_files);
         $data['js_files']      = $this->_process_js($this->js_files);
         $data['meta']          = $this->_process_meta($this->meta_tags);
         //Application Info
-        $data['title']         = $this->item('title');
+        $data['app_title']     = $this->item('title');
         $data['favicon']       = $this->item('favicon');
         $data['company_name']  = ucfirst($this->item('company_name'));
         $data['app_name']      = ucfirst($this->item('app_name'));
         $data['app_version']   = $this->item('app_version');
         $data['app_year']      = $this->item('app_year');
         //Application Info
-        $data['body_class']    = 'gray-bg';
-        $data['body']          = $this->render($template, $data);
+        $data['body_class']    = 'gray-bg landing';
+        //Recursive parse
+        $data['body']          = self::$_parser->parse_string($this->render($template, $data), $data, true);
+
         return $this->render('themes/_core', $data, $return);
     }
 
@@ -251,16 +286,17 @@ class Template
      */
     public function base_url($uri = '', $protocol = NULL):string
     {
-        if (function_exists('base_url')) {
+        if (function_exists('base_url'))
+        {
             return base_url($uri, $protocol);
-        } else {
-            $base_url = "http://".$_SERVER['HTTP_HOST'];
-            $base_url .= str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']);
-            return  $base_url . $uri;
+        }
+        else
+        {
+            return $this->config->base_url() . $uri;
         }
     }
     /**
-     * Render a template
+     * Render a temp`late
      * Parses pseudo-variables contained in the specified template view,
      * replacing them with the data in the second param
      *
@@ -429,7 +465,7 @@ class Template
 
             if (!$is_external)
             {
-                $this->css_files[sha1($css_file)] = $this->_get_path($css_file, 'css');
+                $this->css_files[sha1($css_file)] = $this->item('css_path', 'directories') . $css_file;
             }
             else
             {
@@ -452,7 +488,7 @@ class Template
             $is_external = filter_var($js_file, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED);
             if (!$is_external)
             {
-                $this->js_files[sha1($js_file)] = $this->_get_path($js_file, 'js');
+                $this->js_files[sha1($js_file)] = $this->item('js_path', 'directories') . $js_file;
             }
             else
             {
@@ -502,7 +538,7 @@ class Template
     protected function _set_library($name)
     {
         $this->load->library($name);
-        return $this->$name;
+        return $this->{$name};
     }
 
     /**
@@ -511,36 +547,54 @@ class Template
      */
     private function _set_language()
     {
-        $this->_lang_config = $this->item('multilingual');
-
-        if ($this->_lang)
+        if ($this->_lang === NULL)
         {
-            $this->session->set_userdata('site_lang',  $this->_lang_config['default']);
+            $this->session->set_userdata($this->item('language', 'sessions'),  $this->item('default', 'multilingual'));
+        }
+        elseif ($this->input->get('lang') !== NULL)
+        {
+            $available = $this->item('available', 'multilingual');
+
+            if (isset($available[$this->input->get('lang')]['value']))
+            {
+               $this->session->set_userdata($this->item('language', 'sessions'), $available[$this->input->get('lang')]['value']);
+               header('Refresh:0;url=' . $_SERVER['PHP_SELF'], TRUE, 302);
+               exit;
+            }
         }
 
-        $langfile = preg_replace('/_lang$/', '', $this->_parent) . '_lang.php';
-        $langpath = APPPATH . 'language/' . $this->_lang_config['default'];
-        $this->_lang_dir = $langpath . '/' . $langfile;
-
-        if (!is_dir($langpath))
+        if ($this->item('lang_helper') == TRUE && !is_null($this->_parent) && !empty($this->_parent))
         {
-            mkdir($langpath, 0777, true);
+            $langfile = preg_replace('/_lang$/', '', $this->_parent) . '_lang.php';
+            $langpath = APPPATH . 'language/' . $this->_lang;
+            $this->_lang_dir = $langpath . '/' . $langfile;
+
+            if (!is_dir($langpath))
+            {
+                mkdir($langpath, 0777, true);
+            }
+
+            if (!file_exists($this->_lang_dir))
+            {
+                $this->load->helper(['file', 'inflector']);
+                write_file($this->_lang_dir, "<?php defined('BASEPATH') OR exit('No direct script access allowed');" . PHP_EOL);
+            }
         }
 
-        $this->load->helper(['file', 'inflector']);
+         $langs = array();
+         $autoload = $this->item('autoload', 'multilingual');
 
-        if (!file_exists($this->_lang_dir) && !is_null($this->_parent))
+        if (count($autoload) > 0 && is_array($autoload))
         {
-            write_file($this->_lang_dir, "<?php defined('BASEPATH') OR exit('No direct script access allowed');" . PHP_EOL);
+            $langs = array_merge($langs, $autoload);
         }
 
-        if (isset($this->_lang_config['autoload']))
+        if (!empty($this->_parent) && !is_null($this->_parent))
         {
-            $autoload = $this->_lang_config['autoload'];
-            array_push($autoload, $this->_parent);
-
-            $this->lang->load($autoload, $this->_lang);
+            array_push($langs, $this->_parent);
         }
+
+        $this->lang->load($langs, $this->_lang);
     }
 
     /**
@@ -575,7 +629,7 @@ class Template
         }
         elseif (!$is_url)
         {
-            $url = $this->base_url($url);
+            $url = $this->base_url($this->_module_uri . $url);
         }
 
         return str_replace('>', ' href="' . trim($url) . '">', $template);
@@ -749,12 +803,23 @@ class Template
         $menu       = $this->item('menu');
         $theme_name = $this->item('theme');
         $template   = $this->item($theme_name);
+        /*
+        if (!is_array($menu))
+        {
+            show_error(APPPATH . 'config'. DIRECTORY_SEPARATOR . $this->_menu . '.php is not valid menu array.');
+        }*/
 
         $out = (string) '';
 
         foreach ($menu as $parent => $url)
         {
             $parents   = $menu[$parent];
+
+            if (isset($parents['group']) && !in_array($this->_group, $parents['group']))
+            {
+                continue;
+            }
+
             $children  = array_key_exists('children', $parents);
             $parent_id = basename($parents['url']);
 
@@ -851,7 +916,8 @@ class Template
      */
     private function is_parent($parent, $class, $template) : string
     {
-        if ($parent == $this->_parent)
+
+        if ($parent == $this->_parent || $parent == $this->uri->segment(2) || $parent == trim($this->_dir, '/'))
         {
             $out = $this->_set_class($class, $template);
         }
@@ -872,7 +938,11 @@ class Template
 
     private function is_child($child, $class, $template): string
     {
-        if ($child == $this->_child)
+        if ($child == $this->_child && empty($this->_dir))
+        {
+            $out = $this->_set_class($class, $template);
+        }
+        elseif ($child == $this->_parent && !empty($this->_dir))
         {
             $out = $this->_set_class($class, $template);
         }
@@ -918,7 +988,7 @@ class Template
     {
         $template = $this->item('breadcrumb');
 
-        $uri = $this->_uri_count;
+        $uri = $this->_uri;
 
         $out = (string) '';
 
@@ -933,9 +1003,9 @@ class Template
 
             $out .= $template['list_open'];
 
-            $out .= $this->_set_href($this->base_url($this->_module), $template['link_open']);
+            $out .= $this->_set_href($this->base_url($this->_module_uri) . 'dashboard', $template['link_open']);
 
-            $out .= $this->set_lang('main_home');
+            $out .= $this->set_lang('template_home');
 
             $out .= $template['link_close'];
 
@@ -947,16 +1017,23 @@ class Template
                 $current = $this->uri->segment($i);
                 $before  = $this->uri->segment($uri - 1);
                 $last    = $this->uri->segment($uri);
-                $url[$i] = $current;
+                if ($current !== $this->_module)
+                {
+                    $url[$i] = $current;
+                }
 
                 if (!is_numeric($current))
                 {
                     $this->_url[$i] = implode('/', $url);
                     $this->_url[1]  = null;
                     if (!is_null($this->_module) && $i == 1)
+                    {
                         continue;
+                    }
                     elseif(!is_null($this->_module))
+                    {
                         $this->_url[2]  = null;
+                    }
 
                     $lang_line[$i]  = implode('_', $url);
 
@@ -1016,7 +1093,7 @@ class Template
      */
     private function _process_title() :string
     {
-        $uri = $this->_uri_count;
+        $uri = $this->_uri;
 
         if ($uri !== 0)
         {
@@ -1026,8 +1103,11 @@ class Template
             for ($i = 1; $i <= $uri; $i++)
             {
                 $current = $this->uri->segment($i);
-                $url[$i] = $current;
 
+                if ($current !== $this->_module)
+                {
+                    $url[$i] = $current;
+                }
                 if (!is_numeric($current))
                 {
                     $lang_line[$i] = implode('_', $url);
@@ -1281,16 +1361,17 @@ class Template
 
     private function _process_back_buttom()
     {
-        $label = $this->set_lang('return_label', 'section_');
+        $label = $this->set_lang('action_back', 'section_');
+
         $c = count($this->_url);
         if ($c > 2 && is_null($this->_module))
         {
         $url = $this->_url[$c - 1];
-        return sprintf("<a href='%s' class='btn btn-default'><i class='fa fa-arrow-left'></i>&nbsp;%s</a>", $url, $label);
+        return sprintf("<a href='%s' class='btn btn-primary btn-w-m'><i class='fa fa-arrow-left'></i>&nbsp;%s</a>", $this->_module_uri . $url, $label);
         } elseif($c > 3 && !is_null($this->_module))
         {
         $url = $this->_url[$c - 1];
-        return sprintf("<a href='%s' class='btn btn-default'><i class='fa fa-arrow-left'></i>&nbsp;%s</a>", $url, $label);
+        return sprintf("<a href='%s' class='btn btn-primary btn-w-m'><i class='fa fa-arrow-left'></i>&nbsp;%s</a>", $this->_module_uri . $url, $label);
         }
     }
 
@@ -1301,20 +1382,28 @@ class Template
     private function _process_language_list()
     {
 
-        $langs = $this->_lang_config['available'];
-
-        $out = '<ul class="dropdown-menu animated m-t-xs">';
+        $langs = $this->item('available', 'multilingual');
+        $out   = '<ul class="dropdown-menu animated m-t-xs">';
 
         foreach ($langs as $key => $value)
         {
-            $out .= '<li>';
-            $out .= sprintf('<a rel="%s" data-language="%s" href="%s"> %s</a>',$key, $value['value'], $this->uri->uri_string().'?lang='. $key, $value['label']);
+            if ($this->_lang ==  $value['value'])
+            {
+                $out .= '<li class="disabled">';
+                $out .= sprintf('<a class="set-languague" rel="%s" data-language="%s" href="%s"> %s</a>', $key, $value['value'], 'javascript:void', $value['label']);
+            }
+            else
+            {
+                $out .= '<li>';
+                $out .= sprintf('<a class="set-languague" rel="%s" data-language="%s" href="%s"> %s</a>', $key, $value['value'], $this->uri->uri_string().'?lang='. $key, $value['label']);
+            }
+
             $out .= '</li>';
         }
 
+        //disabled
         $out .= '</ul>';
 
         return $out;
     }
-
 }

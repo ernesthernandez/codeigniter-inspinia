@@ -1,24 +1,24 @@
 <div class="row border-bottom">
-    <nav class="navbar {nav_class}" role="navigation">
+    <nav class="navbar <?php echo $nav_class; ?>" role="navigation">
         <div class="navbar-header">
             <a class="navbar-minimalize minimalize-styl-2 btn btn-primary" href="javascript:void(0);" onclick="this.blur();"><i class="fa fa-bars"></i> </a>
             <form id="app-search" role="search" class="navbar-form-custom" method="post" autocomplete="off">
                 <div class="form-group text-uppercase" >
-                    <input type="text" placeholder="Search..." class="form-control" name="top-search" id="top-search" />
+                    <input type="text" placeholder="<?php echo $search_label; ?>" class="form-control" name="top-search" id="top-search" />
                 </div>
             </form>
         </div>
         <ul class="nav navbar-top-links navbar-right">
             <?php if (isset($message)): ?>
                 <li>
-                    <span class="m-r-sm text-muted welcome-message">{message}</span>
+                    <span class="m-r-sm text-muted welcome-message"><?php echo $message; ?></span>
                 </li>
             <?php endif ?>
             <li class="dropdown">
                 <a class="dropdown-toggle count-info" href="#" data-toggle="dropdown">
                     <i class="fa fa-globe"></i>
                 </a>
-                {lang_list}
+                <?php echo $lang_list; ?>
             </li>
             <li class="dropdown">
                 <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#" aria-expanded="false">
@@ -54,8 +54,8 @@
                 </ul>
             </li>
             <li>
-                <a href="{logout_url}">
-                    <i class="fa fa-sign-out"></i> Log out
+                <a href="<?php echo $logout_url; ?>">
+                    <i class="fa fa-sign-out"></i><?php echo $logout_label; ?>
                 </a>
             </li>
         </ul>
